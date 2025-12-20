@@ -1,0 +1,26 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "backend server for Jeevan Aahar ",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongoose": "^9.0.2"
+  },
+  "keywords": [
+    "food",
+    "waste",
+    "management"
+  ],
+  "author": "team 404_Not_found",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

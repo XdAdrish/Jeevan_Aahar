@@ -1,19 +1,23 @@
-import admin from "firebase-admin";
-import {ApiError} from "../utils/api-error.js";
+import admin from "../config/firebaseAdmin.js";
 
 export const firebaseAuth = async (req, res, next) => {
   try {
-    const header = req.headers.authorization;
-    if (!header || !header.startsWith("Bearer ")) {
-      return new ApiError(401, "Unauthorized");
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "No token provided" });
     }
 
-    const token = header.split("Bearer ")[1];
-    const decoded = await admin.auth().verifyIdToken(token, true);
+    const token = authHeader.split(" ")[1];
 
-    req.firebaseUser = decoded; // VERIFIED
+    const decodedToken = await admin.auth().verifyIdToken(token);
+
+    req.firebaseUser = decodedToken;
     next();
-  } catch {
-    return new ApiError(401, "Unauthorized");
+  } catch (error) {
+    console.error("❌ Firebase token verification failed:", error.message);
+    res.status(401).json({
+      error: "Internal Server Error: Firebase Config Failed",
+    });
   }
 };

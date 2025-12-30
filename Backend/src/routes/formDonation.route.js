@@ -12,12 +12,8 @@ const router = Router();
 
 router
   .route("/")
-  .post(
-    firebaseAuth,
-    attachUser, 
-    requireRole("donor"),
-    createDonationForm
-  )
-  .get(getAllDonations);
+  .post(firebaseAuth, attachUser, requireRole("donor"), createDonationForm)
+  .get(firebaseAuth, attachUser, requireRole("donor"), getAllDonations);
+
 
 export default router;

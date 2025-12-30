@@ -48,6 +48,11 @@ const donationFormSchema = new Schema(
             type: Date,
             required: true
         },
+        donor: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
     },
     {
         timestamps: true,

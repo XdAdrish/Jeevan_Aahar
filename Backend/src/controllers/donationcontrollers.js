@@ -1,58 +1,100 @@
 import { ApiResponse } from "../utils/api-response.js";
-import { ApiError } from "../utils/api-error.js";
-import { asyncHandler } from "../utils/asyncHadler.js";
 import { donationForm } from "../models/formDonation.model.js";
 
-const createDonationForm = asyncHandler(async (req, res) => {
+const createDonationForm = async (req, res) => {
+  try {
+    console.log("📦 Creating donation with body:", req.body);
+    console.log("👤 Logged in user:", req.user?._id);
+
+    if (!req.user?._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: User not found",
+      });
+    }
+
     const {
-        name,
-        quantity,
-        foodType,
-        email,
-        phone,
-        address,
-        preparedAt,
-        picture,
-        additionalNote,
-        landmark,
-        pickupTime,
-        pickupDate,
+      name,
+      quantity,
+      foodType,
+      email,
+      phone,
+      address,
+      preparedAt,
+      additionalNote,
+      landmark,
+      pickupTime,
+      pickupDate,
+      picture,
     } = req.body;
 
-    if (!name || !quantity || !foodType || !email || !phone || !address || !preparedAt || !picture || !pickupTime || !pickupDate) {
-        throw new Error("All fields are required");
+    // Required fields (NO picture here)
+    const requiredFields = {
+      name,
+      quantity,
+      foodType,
+      email,
+      phone,
+      address,
+      preparedAt,
+      pickupDate,
+      pickupTime,
+    };
+
+    for (const [key, value] of Object.entries(requiredFields)) {
+      if (!value) {
+        return res.status(400).json({
+          success: false,
+          message: `Field '${key}' is required`,
+        });
+      }
     }
-    const form = await donationForm.create({
-        name,
-        quantity,
-        foodType,
-        email,
-        phone,
-        address,
-        preparedAt,
-        picture,
-        additionalNote,
-        landmark,
-        pickupTime,
-        pickupDate,
+
+    const donation = await donationForm.create({
+      name,
+      quantity,
+      foodType,
+      email,
+      phone,
+      address,
+      preparedAt: new Date(preparedAt),
+      pickupDate: new Date(pickupDate),
+      pickupTime: new Date(pickupTime),
+      additionalNote,
+      landmark,
+      picture, // should be URL later
+      donor: req.user._id,
     });
 
-    if (!form) {
-        throw new ApiError(500, "Something went wrong");
-    }
+    return res.status(201).json(
+      new ApiResponse(201, donation, "Donation created successfully")
+    );
 
-    res.status(201).json(new ApiResponse(201, form, "form created successfully"));
+  } catch (error) {
+    console.error("❌ Donation creation failed:", error);
 
-});
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
 
-const getAllDonations = asyncHandler(async (req, res) => {
-    const donations = await donationForm.find().sort({ createdAt: -1 });
+const getAllDonations = async (req, res) => {
+  try {
+    const donations = await donationForm
+      .find()
+      .sort({ createdAt: -1 });
 
-    if (!donations) {
-        throw new ApiError(404, "No donations found");
-    }
-
-    res.status(200).json(new ApiResponse(200, donations, "Donations fetched successfully"));
-});
+    return res
+      .status(200)
+      .json(new ApiResponse(200, donations, "Donations fetched successfully"));
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch donations",
+    });
+  }
+};
 
 export { createDonationForm, getAllDonations };

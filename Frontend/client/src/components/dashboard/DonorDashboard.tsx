@@ -33,6 +33,7 @@ export function DonorDashboard() {
   const { data: donationsData, isLoading, error } = useQuery({
     queryKey: ["donations"],
     queryFn: getDonations,
+    enabled: !!userProfile, // Only fetch when user is authenticated
   });
 
   // Debug logging

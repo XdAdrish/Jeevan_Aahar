@@ -1,7 +1,8 @@
 import { auth } from "@/config/firebase";
 
 // Backend API base URL - update this based on your backend configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const _RAW_API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = _RAW_API_BASE.replace(/\/+$/, "");
 
 export interface DonationFormData {
     name: string;
@@ -54,7 +55,10 @@ export async function createDonation(
         const user = auth.currentUser;
         const token = user ? await user.getIdToken() : null;
 
-        const response = await fetch(`${API_BASE_URL}/api/v1/donation`, {
+        const url = `${API_BASE_URL}/api/v1/donation`;
+        console.debug("createDonation: POST", url, { donationData, hasToken: !!token });
+
+        const response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -64,13 +68,18 @@ export async function createDonation(
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
+            const text = await response.text().catch(() => "");
+            console.warn("createDonation: non-OK response", response.status, text);
+            const errorData = (() => {
+                try { return JSON.parse(text); } catch { return null; }
+            })();
             throw new Error(
-                errorData.message || `Failed to create donation: ${response.statusText}`
+                (errorData && errorData.message) || `Failed to create donation: ${response.status} ${response.statusText}`
             );
         }
 
         const data = await response.json();
+        console.debug("createDonation: success", data);
         return data;
     } catch (error) {
         console.error("Error creating donation:", error);
@@ -84,15 +93,23 @@ export async function createDonation(
 export async function getDonations(): Promise<ApiResponse<DonationResponse[]>> {
     try {
         const user = auth.currentUser;
+        console.log("getDonations: auth.currentUser =", user ? `${user.uid} (${user.email})` : "NULL");
+
         const token = user ? await user.getIdToken() : null;
+        console.log("getDonations: token =", token ? `${token.substring(0, 20)}...` : "NULL");
+
+        const headers = {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+        };
+        console.log("getDonations: headers =", headers);
 
         const response = await fetch(`${API_BASE_URL}/api/v1/donation`, {
             method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                ...(token && { Authorization: `Bearer ${token}` }),
-            },
+            headers,
         });
+
+        console.log("getDonations: response status =", response.status, response.statusText);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));

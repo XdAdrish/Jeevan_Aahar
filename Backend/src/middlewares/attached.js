@@ -7,16 +7,16 @@ export const attachUser = async (req, res, next) => {
   let user = await User.findOne({ uid });
 
   if (!user) {
+    // Create new user - users can be both donors and recipients
     user = await User.create({
       uid,
       email,
       name,
       avatar: picture,
-      role: "user"
+      role: "donor" // Default role for new users
     });
-  }else{
-    throw new ApiError(401, "user already exists");
   }
+  // If user exists, just use the existing user (don't throw error)
 
   req.user = user; // MongoDB user
   next();

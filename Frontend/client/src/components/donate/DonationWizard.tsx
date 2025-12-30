@@ -94,6 +94,7 @@ export function DonationWizard() {
 
   const handleSubmit = async () => {
     setIsLoading(true);
+    console.debug("DonationWizard: handleSubmit invoked", { formData, images });
 
     try {
       // Validate required fields
@@ -138,7 +139,9 @@ export function DonationWizard() {
       };
 
       // Submit to backend
+      console.debug("DonationWizard: calling createDonation");
       await createDonation(donationData);
+      console.debug("DonationWizard: createDonation resolved");
 
       // Invalidate donations query to refresh dashboards
       queryClient.invalidateQueries({ queryKey: ["donations"] });

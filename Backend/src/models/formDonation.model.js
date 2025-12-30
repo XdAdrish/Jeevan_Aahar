@@ -10,6 +10,10 @@ const donationFormSchema = new Schema(
             type: Number,
             required: true,
         },
+        foodType: {
+            type: String,
+            required: true,
+        },
         email: {
             type: String,
             required: true,
@@ -22,25 +26,25 @@ const donationFormSchema = new Schema(
             type: String,
             required: true,
         },
-            preparedAt : {
-                type: Date,
-                default: Date.now,
-            },
-        picture :{
+        preparedAt: {
+            type: Date,
+            default: Date.now,
+        },
+        picture: {
             type: String,
             required: true,
         },
-        addtionalNote:{
+        additionalNote: {
             type: String,
         },
-        landmark:{
+        landmark: {
             type: String,
         },
-        pickupTime:{
+        pickupTime: {
             type: Date,
             required: true
         },
-        pickupDate:{
+        pickupDate: {
             type: Date,
             required: true
         },

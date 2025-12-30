@@ -2,9 +2,6 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { DonationWizard } from "@/components/donate/DonationWizard";
 import { CheckCircle2 } from "lucide-react";
 
-// Placeholder for API integration
-const API_KEY = "YOUR_API_KEY_HERE";
-
 export default function DonatePage() {
   return (
     <div className="min-h-screen bg-background">
@@ -51,23 +48,12 @@ export default function DonatePage() {
               </ul>
             </div>
 
-            {/* Stats */}
+            {/* Stats - Removed hardcoded values */}
             <div className="bg-primary/5 rounded-2xl border border-primary/20 p-6">
-              <h3 className="text-lg font-semibold text-primary mb-4">Your Impact</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Total Donations</span>
-                  <span className="font-bold">12</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Meals Shared</span>
-                  <span className="font-bold">450+</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Families Fed</span>
-                  <span className="font-bold">85</span>
-                </div>
-              </div>
+              <h3 className="text-lg font-semibold text-primary mb-4">Make an Impact</h3>
+              <p className="text-sm text-muted-foreground">
+                Start donating today to help feed those in need. Your contributions will be tracked here.
+              </p>
             </div>
 
             {/* Contact */}

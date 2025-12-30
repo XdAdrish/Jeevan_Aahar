@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { createDonationForm } from "../controllers/donationcontrollers.js";
+import { createDonationForm, getAllDonations } from "../controllers/donationcontrollers.js";
 
 const router = Router();
 
-router.route("/").post(createDonationForm);
+router.route("/").post(createDonationForm).get(getAllDonations);
 
 export default router;
 

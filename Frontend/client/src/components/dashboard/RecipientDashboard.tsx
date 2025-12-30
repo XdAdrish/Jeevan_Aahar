@@ -8,77 +8,17 @@ import {
   MapPin,
   Calendar,
   Eye,
-  Bell
+  Bell,
+  Inbox
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-
-const recipientStats = [
-  { label: "Meals Received", value: "2,800", icon: Utensils, color: "success" },
-  { label: "People Fed", value: "450", icon: Users, color: "accent" },
-  { label: "Total Donations", value: "18", icon: Package, color: "primary" },
-  { label: "This Month", value: "5", icon: Heart, color: "info" },
-];
-
-const recentRequests = [
-  {
-    id: 1,
-    food: "Cooked Meals",
-    quantity: "100 meals",
-    date: "Dec 21, 2024",
-    status: "Matched",
-    donor: "Green Valley Restaurant",
-    image: "🍛",
-  },
-  {
-    id: 2,
-    food: "Groceries",
-    quantity: "50 kg",
-    date: "Dec 19, 2024",
-    status: "Delivered",
-    donor: "City Fresh Market",
-    image: "🛒",
-  },
-  {
-    id: 3,
-    food: "Packaged Food",
-    quantity: "200 packets",
-    date: "Dec 16, 2024",
-    status: "Delivered",
-    donor: "ABC Caterers",
-    image: "📦",
-  },
-  {
-    id: 4,
-    food: "Baby Food",
-    quantity: "30 units",
-    date: "Dec 14, 2024",
-    status: "Delivered",
-    donor: "Community Kitchen",
-    image: "🍼",
-  },
-];
-
-const upcomingDeliveries = [
-  {
-    id: 1,
-    food: "Lunch Meals",
-    quantity: "75 meals",
-    time: "Today, 2:00 PM",
-    donor: "Hotel Sunrise",
-    status: "In Transit",
-  },
-  {
-    id: 2,
-    food: "Dinner Packets",
-    quantity: "50 packets",
-    time: "Today, 7:00 PM",
-    donor: "Spice Garden",
-    status: "Confirmed",
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { getDonations, DonationResponse } from "@/services/donationService";
+import { format, isToday } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 const statusStyles = {
   "Delivered": "bg-success/10 text-success border-success/20",
@@ -86,15 +26,58 @@ const statusStyles = {
   "In Transit": "bg-accent/10 text-accent border-accent/20",
   "Pending": "bg-warning/10 text-warning border-warning/20",
   "Confirmed": "bg-primary/10 text-primary border-primary/20",
+  "Available": "bg-success/10 text-success border-success/20",
+};
+
+const foodTypeEmojis: Record<string, string> = {
+  cooked: "🍛",
+  raw: "🥬",
+  packaged: "📦",
+  beverages: "🥤",
+  bakery: "🍞",
+  dairy: "🥛",
 };
 
 export function RecipientDashboard() {
+  const { userProfile } = useAuth();
+
+  // Fetch all donations from backend
+  const { data: donationsData, isLoading, error } = useQuery({
+    queryKey: ["donations"],
+    queryFn: getDonations,
+  });
+
+  const allDonations = donationsData?.data || [];
+
+  // Filter donations for today's pickups
+  const todayPickups = allDonations.filter((d: DonationResponse) =>
+    isToday(new Date(d.pickupDate))
+  );
+
+  // Calculate stats
+  const totalDonations = allDonations.length;
+  const totalMeals = allDonations.reduce((sum: number, d: DonationResponse) => sum + d.quantity, 0);
+  const peopleFed = Math.floor(totalMeals / 4);
+  const thisMonth = allDonations.filter((d: DonationResponse) => {
+    const donationDate = new Date(d.createdAt);
+    const now = new Date();
+    return donationDate.getMonth() === now.getMonth() &&
+      donationDate.getFullYear() === now.getFullYear();
+  }).length;
+
+  const recipientStats = [
+    { label: "Meals Available", value: totalMeals.toString(), icon: Utensils, color: "success" },
+    { label: "People Can Feed", value: peopleFed.toString(), icon: Users, color: "accent" },
+    { label: "Total Donations", value: totalDonations.toString(), icon: Package, color: "primary" },
+    { label: "This Month", value: thisMonth.toString(), icon: Heart, color: "info" },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Welcome, Hope Foundation! 👋</h2>
+          <h2 className="text-2xl font-bold">Welcome, {userProfile?.name || 'Recipient'}! 👋</h2>
           <p className="text-muted-foreground">View donations sent by donors and track deliveries.</p>
         </div>
       </div>
@@ -118,75 +101,118 @@ export function RecipientDashboard() {
         ))}
       </div>
 
-      {/* Upcoming Deliveries Alert */}
-      <Card className="bg-gradient-to-r from-accent/5 to-warning/5 border-accent/20">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-full bg-accent/10">
-              <Bell className="h-6 w-6 text-accent" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                Upcoming Deliveries Today
-                <Badge className="bg-accent text-accent-foreground">{upcomingDeliveries.length}</Badge>
-              </h3>
-              <div className="mt-3 space-y-2">
-                {upcomingDeliveries.map((delivery) => (
-                  <div key={delivery.id} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
-                    <div>
-                      <p className="font-medium">{delivery.food} • {delivery.quantity}</p>
-                      <p className="text-sm text-muted-foreground">From {delivery.donor}</p>
+      {/* Today's Pickups Alert */}
+      {todayPickups.length > 0 && (
+        <Card className="bg-gradient-to-r from-accent/5 to-warning/5 border-accent/20">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-accent/10">
+                <Bell className="h-6 w-6 text-accent" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  Available for Pickup Today
+                  <Badge className="bg-accent text-accent-foreground">{todayPickups.length}</Badge>
+                </h3>
+                <div className="mt-3 space-y-2">
+                  {todayPickups.slice(0, 3).map((donation: DonationResponse) => (
+                    <div key={donation._id} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
+                      <div>
+                        <p className="font-medium">{donation.name} • {donation.quantity} servings</p>
+                        <p className="text-sm text-muted-foreground">
+                          {donation.address.split(',')[0]}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">
+                          {format(new Date(donation.pickupTime), "h:mm a")}
+                        </p>
+                        <Badge variant="outline" className={statusStyles["Available"]}>
+                          Available
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{delivery.time}</p>
-                      <Badge variant="outline" className={statusStyles[delivery.status as keyof typeof statusStyles]}>
-                        {delivery.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Recent Donations Received */}
+      {/* All Available Donations */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg">Recent Donations Received</CardTitle>
+          <CardTitle className="text-lg">Available Donations</CardTitle>
           <Button variant="ghost" size="sm" className="text-muted-foreground">
             View All
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {recentRequests.map((request) => (
-              <div
-                key={request.id}
-                className="flex items-center gap-4 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors"
-              >
-                <div className="text-3xl">{request.image}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium truncate">{request.food}</p>
-                    <Badge variant="outline" className={statusStyles[request.status as keyof typeof statusStyles]}>
-                      {request.status}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {request.quantity} • From {request.donor}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">{request.date}</p>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">
-                    <Eye className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : allDonations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="p-4 rounded-full bg-secondary/50 mb-4">
+                <Inbox className="h-8 w-8 text-muted-foreground" />
               </div>
-            ))}
-          </div>
+              <h3 className="text-lg font-semibold mb-2">No donations available</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                There are no donations available at the moment. Check back later!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {allDonations.slice(0, 10).map((donation: DonationResponse) => (
+                <div
+                  key={donation._id}
+                  className="flex items-center gap-4 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                >
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
+                    {donation.picture ? (
+                      <img
+                        src={donation.picture}
+                        alt={donation.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-3xl">
+                        {foodTypeEmojis[donation.foodType] || "🍽️"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium truncate">{donation.name}</p>
+                      <Badge variant="outline" className={statusStyles["Available"]}>
+                        Available
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {donation.quantity} servings{donation.foodType ? ` • ${donation.foodType}` : ''}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {donation.address.split(',').slice(0, 2).join(',')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(donation.pickupDate), "MMM dd, yyyy")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(donation.pickupTime), "h:mm a")}
+                    </p>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 mt-1">
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

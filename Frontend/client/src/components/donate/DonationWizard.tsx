@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { createDonation, convertImageToBase64 } from "@/services/donationService";
+import { useQueryClient } from "@tanstack/react-query";
 
 const steps = [
   { id: 1, title: "Food Type", icon: Utensils },
@@ -25,38 +28,39 @@ const foodTypes = [
 
 interface FormData {
   foodType: string;
-  foodName: string;
+  name: string;
   quantity: string;
-  servings: string;
-  expiryTime: string;
   address: string;
   landmark: string;
-  preferredTime: string;
+  pickupDate: string;
+  pickupTime: string;
   contactName: string;
   phone: string;
   email: string;
-  notes: string;
+  additionalNote: string;
 }
 
 export function DonationWizard() {
   const { toast } = useToast();
+  const { userProfile } = useAuth();
+  const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<FormData>({
     foodType: "",
-    foodName: "",
+    name: "",
     quantity: "",
-    servings: "",
-    expiryTime: "",
     address: "",
     landmark: "",
-    preferredTime: "",
+    pickupDate: "",
+    pickupTime: "",
     contactName: "",
     phone: "",
     email: "",
-    notes: "",
+    additionalNote: "",
   });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,12 +92,72 @@ export function DonationWizard() {
     if (currentStep > 1) setCurrentStep(prev => prev - 1);
   };
 
-  const handleSubmit = () => {
-    setIsSubmitted(true);
-    toast({
-      title: "Donation Submitted! 🎉",
-      description: "Thank you for your generosity. We'll contact you shortly for pickup.",
-    });
+  const handleSubmit = async () => {
+    setIsLoading(true);
+
+    try {
+      // Validate required fields
+      if (!formData.name || !formData.quantity || !formData.address || !formData.phone || !formData.pickupDate || !formData.pickupTime) {
+        toast({
+          title: "Missing Required Fields",
+          description: "Please fill in all required fields before submitting.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate that at least one image is uploaded
+      if (images.length === 0) {
+        toast({
+          title: "Image Required",
+          description: "Please upload at least one photo of the food.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Combine date and time for pickup
+      const pickupDateTime = new Date(`${formData.pickupDate}T${formData.pickupTime}`);
+
+      // Prepare donation data
+      const donationData = {
+        name: formData.name,
+        quantity: parseFloat(formData.quantity) || 0,
+        foodType: formData.foodType,
+        email: formData.email || userProfile?.email || "",
+        phone: formData.phone,
+        address: formData.address,
+        preparedAt: new Date(), // Use current date/time as prepared time
+        picture: images[0], // Use first image as primary picture
+        additionalNote: formData.additionalNote,
+        landmark: formData.landmark,
+        pickupTime: pickupDateTime,
+        pickupDate: new Date(formData.pickupDate),
+      };
+
+      // Submit to backend
+      await createDonation(donationData);
+
+      // Invalidate donations query to refresh dashboards
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
+
+      setIsSubmitted(true);
+      toast({
+        title: "Donation Submitted! 🎉",
+        description: "Thank you for your generosity. We'll contact you shortly for pickup.",
+      });
+    } catch (error: any) {
+      console.error("Error submitting donation:", error);
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit donation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -105,18 +169,18 @@ export function DonationWizard() {
           </div>
           <h2 className="text-3xl font-bold">Thank You! 🫶</h2>
           <p className="text-muted-foreground">
-            Your donation has been submitted successfully. Our team will contact you 
+            Your donation has been submitted successfully. Our team will contact you
             within 30 minutes to arrange pickup.
           </p>
           <div className="bg-secondary/50 rounded-xl p-4 text-left">
             <h4 className="font-semibold mb-2">Donation Summary</h4>
             <div className="space-y-1 text-sm text-muted-foreground">
-              <p><span className="font-medium text-foreground">Food:</span> {formData.foodName}</p>
+              <p><span className="font-medium text-foreground">Food:</span> {formData.name}</p>
               <p><span className="font-medium text-foreground">Quantity:</span> {formData.quantity}</p>
               <p><span className="font-medium text-foreground">Location:</span> {formData.address}</p>
             </div>
           </div>
-          <Button onClick={() => { setIsSubmitted(false); setCurrentStep(1); setFormData({ foodType: "", foodName: "", quantity: "", servings: "", expiryTime: "", address: "", landmark: "", preferredTime: "", contactName: "", phone: "", email: "", notes: "" }); }} className="gradient-hero border-0">
+          <Button onClick={() => { setIsSubmitted(false); setCurrentStep(1); setImages([]); setFormData({ foodType: "", name: "", quantity: "", address: "", landmark: "", pickupDate: "", pickupTime: "", contactName: "", phone: "", email: "", additionalNote: "" }); }} className="gradient-hero border-0">
             Donate More Food
           </Button>
         </div>
@@ -132,13 +196,12 @@ export function DonationWizard() {
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div className="flex flex-col items-center">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all ${
-                  currentStep > step.id 
-                    ? "bg-primary border-primary" 
-                    : currentStep === step.id 
-                      ? "border-primary bg-primary/10" 
-                      : "border-border bg-background"
-                }`}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all ${currentStep > step.id
+                  ? "bg-primary border-primary"
+                  : currentStep === step.id
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-background"
+                  }`}>
                   {currentStep > step.id ? (
                     <Check className="h-5 w-5 text-primary-foreground" />
                   ) : (
@@ -173,11 +236,10 @@ export function DonationWizard() {
                     key={type.id}
                     type="button"
                     onClick={() => updateFormData("foodType", type.id)}
-                    className={`p-4 rounded-xl border-2 transition-all text-left ${
-                      formData.foodType === type.id
-                        ? "border-primary bg-primary/5 shadow-soft"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`p-4 rounded-xl border-2 transition-all text-left ${formData.foodType === type.id
+                      ? "border-primary bg-primary/5 shadow-soft"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <span className="text-3xl block mb-2">{type.icon}</span>
                     <span className="font-medium block">{type.label}</span>
@@ -197,15 +259,15 @@ export function DonationWizard() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="foodName">Food Name / Description *</Label>
+                  <Label htmlFor="name">Food Name / Description *</Label>
                   <div className="relative">
                     <Utensils className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="foodName"
+                      id="name"
                       placeholder="e.g., Vegetable Biryani"
                       className="pl-10"
-                      value={formData.foodName}
-                      onChange={(e) => updateFormData("foodName", e.target.value)}
+                      value={formData.name}
+                      onChange={(e) => updateFormData("name", e.target.value)}
                     />
                   </div>
                 </div>
@@ -222,45 +284,21 @@ export function DonationWizard() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="servings">Approximate Servings</Label>
-                  <Input
-                    id="servings"
-                    type="number"
-                    placeholder="e.g., 20 people"
-                    min="1"
-                    value={formData.servings}
-                    onChange={(e) => updateFormData("servings", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expiryTime">Best Before / Prepared Time *</Label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="expiryTime"
-                      type="datetime-local"
-                      className="pl-10"
-                      value={formData.expiryTime}
-                      onChange={(e) => updateFormData("expiryTime", e.target.value)}
-                    />
-                  </div>
-                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="notes">Additional Notes</Label>
+                <Label htmlFor="additionalNote">Additional Notes</Label>
                 <Textarea
-                  id="notes"
+                  id="additionalNote"
                   placeholder="Any dietary information, allergens, or special instructions..."
                   className="min-h-[80px]"
-                  value={formData.notes}
-                  onChange={(e) => updateFormData("notes", e.target.value)}
+                  value={formData.additionalNote}
+                  onChange={(e) => updateFormData("additionalNote", e.target.value)}
                 />
               </div>
 
               {/* Image Upload */}
               <div className="space-y-2">
-                <Label>Food Images (Optional)</Label>
+                <Label>Food Images *</Label>
                 <p className="text-xs text-muted-foreground mb-2">Upload photos of the food to help recipients</p>
                 <div className="flex flex-wrap gap-3">
                   {images.map((img, index) => (
@@ -327,15 +365,28 @@ export function DonationWizard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="preferredTime">Preferred Pickup Time *</Label>
+                  <Label htmlFor="pickupDate">Preferred Pickup Date *</Label>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="preferredTime"
-                      type="datetime-local"
+                      id="pickupDate"
+                      type="date"
                       className="pl-10"
-                      value={formData.preferredTime}
-                      onChange={(e) => updateFormData("preferredTime", e.target.value)}
+                      value={formData.pickupDate}
+                      onChange={(e) => updateFormData("pickupDate", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pickupTime">Preferred Pickup Time *</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="pickupTime"
+                      type="time"
+                      className="pl-10"
+                      value={formData.pickupTime}
+                      onChange={(e) => updateFormData("pickupTime", e.target.value)}
                     />
                   </div>
                 </div>
@@ -400,7 +451,7 @@ export function DonationWizard() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Food:</span>
-                    <p className="font-medium">{formData.foodName || "-"}</p>
+                    <p className="font-medium">{formData.name || "-"}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Quantity:</span>
@@ -426,10 +477,10 @@ export function DonationWizard() {
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            
+
             {currentStep < 4 ? (
-              <Button 
-                onClick={nextStep} 
+              <Button
+                onClick={nextStep}
                 className="gap-2 gradient-hero border-0"
                 disabled={currentStep === 1 && !formData.foodType}
               >
@@ -437,17 +488,18 @@ export function DonationWizard() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 className="gap-2 gradient-hero border-0"
+                disabled={isLoading}
               >
                 <Send className="h-4 w-4" />
-                Submit Donation
+                {isLoading ? "Submitting..." : "Submit Donation"}
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 }

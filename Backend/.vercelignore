@@ -4,4 +4,7 @@ node_modules
 .env.*.local
 *.log
 .DS_Store
-jeevan-aahar-auth-firebase-adminsdk-fbsvc-428749bedf.json
+*.json
+!package.json
+!package-lock.json
+!vercel.json

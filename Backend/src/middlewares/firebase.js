@@ -26,36 +26,22 @@ export const authenticateAndLoadProfile = async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
 
     // 2. Extract Firebase user data
-    const { uid, name, email, role } = decodedToken;
+    const { uid, email } = decodedToken;
 
-    // 3. Find existing profile
+    // 3. Find or create profile (idempotent)
     let profile = await Profile.findOne({ uid });
 
-    // 4. Auto-create profile on first login
+    // 4. Auto-create profile on first authentication
     if (!profile) {
-      // Role can come from Firebase Custom Claims OR query param (for first login)
-      const roleToUse = role || req.query.role;
-
-      if (!roleToUse || !["donor", "recipient"].includes(roleToUse)) {
-        // User exists in Firebase but not in MongoDB and no role provided
-        // Allow the request but mark that profile needs to be created
-        req.profile = null;
-        req.firebaseUser = decodedToken;
-        req.needsProfileSetup = true;
-
-        console.log(`⚠️  User ${email} authenticated but has no MongoDB profile. Needs role assignment.`);
-        return next();
-      }
-
       profile = await Profile.create({
         uid,
-        name: name || decodedToken.name || req.query.name || "User",
         email: email || decodedToken.email,
-        role: roleToUse,
+        name: decodedToken.name || email?.split("@")[0] || "User",
+        role: "donor", // Default role
         isCompleted: false,
       });
 
-      console.log(`✅ New profile created for ${email} as ${roleToUse}`);
+      console.log(`✅ Auto-created MongoDB profile for: ${email} (${uid})`);
     }
 
     // 5. Attach profile to request

@@ -22,20 +22,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const profile = await getUserProfile();
             setUserProfile(profile);
-        } catch (error: any) {
-            // Silently handle 404/403 - profile doesn't exist yet for new users
-            const errorMessage = error.message || "";
-            if (
-                errorMessage.includes("404") ||
-                errorMessage.includes("not found") ||
-                errorMessage.includes("403") ||
-                errorMessage.includes("Access denied")
-            ) {
-                setUserProfile(null);
-            } else {
-                console.error("Error fetching user profile:", error);
-                setUserProfile(null);
-            }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
+            setUserProfile(null);
         }
     };
 

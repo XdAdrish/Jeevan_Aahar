@@ -9,11 +9,9 @@ import { asyncHandler } from "../utils/asyncHadler.js";
  * Shows isCompleted status
  */
 export const getProfile = asyncHandler(async (req, res) => {
-    // Profile is already loaded by authenticateAndLoadProfile middleware
-    const profile = req.profile;
-
+    // Profile is guaranteed to exist and is loaded by authenticateAndLoadProfile middleware
     return res.status(200).json(
-        new ApiResponse(200, profile, "Profile retrieved successfully")
+        new ApiResponse(200, req.profile, "Profile retrieved successfully")
     );
 });
 
@@ -28,7 +26,6 @@ export const getProfile = asyncHandler(async (req, res) => {
  * NEVER allows updating: uid, name, email, role
  */
 export const updateProfile = asyncHandler(async (req, res) => {
-    const profile = req.profile;
     const { phone, address, latitude, longitude, avatar, landmark } = req.body;
 
     // Reject if no fields provided
@@ -51,23 +48,23 @@ export const updateProfile = asyncHandler(async (req, res) => {
     }
 
     // Update only provided fields
-    if (phone !== undefined) profile.phone = phone;
-    if (address !== undefined) profile.address = address;
-    if (landmark !== undefined) profile.landmark = landmark;
-    if (latitude !== undefined) profile.latitude = latitude;
-    if (longitude !== undefined) profile.longitude = longitude;
-    if (avatar !== undefined) profile.avatar = avatar;
+    if (phone !== undefined) req.profile.phone = phone;
+    if (address !== undefined) req.profile.address = address;
+    if (landmark !== undefined) req.profile.landmark = landmark;
+    if (latitude !== undefined) req.profile.latitude = latitude;
+    if (longitude !== undefined) req.profile.longitude = longitude;
+    if (avatar !== undefined) req.profile.avatar = avatar;
 
     // Auto-set isCompleted when required fields are filled
     // Location (latitude/longitude) is now optional
-    if (profile.phone && profile.address) {
-        profile.isCompleted = true;
+    if (req.profile.phone && req.profile.address) {
+        req.profile.isCompleted = true;
     }
 
-    await profile.save();
+    await req.profile.save();
 
     return res.status(200).json(
-        new ApiResponse(200, profile, "Profile updated successfully")
+        new ApiResponse(200, req.profile, "Profile updated successfully")
     );
 });
 

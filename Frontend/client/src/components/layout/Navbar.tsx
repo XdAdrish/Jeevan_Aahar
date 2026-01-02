@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 
 const navLinks = [
   { name: "Home", path: "/", roles: ["public"] },
+  { name: "About Us", path: "/#about", roles: ["public"], isHash: true },
+  { name: "Contact Us", path: "/#contact", roles: ["public"], isHash: true },
   { name: "Donor Dashboard", path: "/donate-dashboard", roles: ["donor"] },
   { name: "Recipient Dashboard", path: "/request-dashboard", roles: ["recipient"] },
   { name: "Donate Food", path: "/donate", roles: ["donor"] },
@@ -37,6 +39,30 @@ export function Navbar() {
     }
   };
 
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    // Only handle hash links on the landing page
+    if (path.startsWith("/#") && location.pathname === "/") {
+      e.preventDefault();
+      const id = path.substring(2); // Remove "/#" to get the id
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+        setIsOpen(false);
+      }
+    } else if (path.startsWith("/#")) {
+      // If not on landing page, navigate to landing page first
+      navigate("/");
+      setTimeout(() => {
+        const id = path.substring(2);
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+      setIsOpen(false);
+    }
+  };
+
   // Filter navigation links based on user role
   const getVisibleLinks = () => {
     if (!user || !userProfile) {
@@ -61,7 +87,15 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link
+            to="/"
+            className="flex items-center gap-2 group"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              navigate('/');
+            }}
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-hero shadow-soft transition-transform group-hover:scale-105">
               <Heart className="h-5 w-5 text-primary-foreground" />
             </div>
@@ -75,11 +109,11 @@ export function Navbar() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === link.path
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
+                onClick={(e) => link.path.startsWith("/#") && handleSmoothScroll(e, link.path)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === link.path
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
               >
                 {link.name}
               </Link>
@@ -130,12 +164,17 @@ export function Navbar() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === link.path
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
+                  onClick={(e) => {
+                    if (link.path.startsWith("/#")) {
+                      handleSmoothScroll(e, link.path);
+                    } else {
+                      setIsOpen(false);
+                    }
+                  }}
+                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${location.pathname === link.path
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    }`}
                 >
                   {link.name}
                 </Link>

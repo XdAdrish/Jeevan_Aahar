@@ -38,9 +38,9 @@ export interface ApiResponse<T> {
 /**
  * Get current user profile
  * 
- * On first login, include role as query parameter to auto-create profile
+ * Backend auto-creates profile on first authentication
  */
-export async function getUserProfile(role?: "donor" | "recipient", name?: string): Promise<UserProfile | null> {
+export async function getUserProfile(): Promise<UserProfile | null> {
     try {
         const user = auth.currentUser;
         const token = user ? await user.getIdToken() : null;
@@ -49,16 +49,7 @@ export async function getUserProfile(role?: "donor" | "recipient", name?: string
             throw new Error("User not authenticated");
         }
 
-        // Build URL with optional role query parameter for first login
-        let url = `${API_BASE_URL}/api/v1/profile`;
-        if (role) {
-            url += `?role=${role}`;
-            if (name) {
-                url += `&name=${encodeURIComponent(name)}`;
-            }
-        }
-
-        const response = await fetch(url, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/profile`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",

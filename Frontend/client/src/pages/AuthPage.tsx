@@ -97,16 +97,10 @@ export default function AuthPage() {
         displayName: signUpData.name,
       });
 
-      // Trigger profile auto-create on backend by calling GET with role and name
-      await getUserProfile(signUpData.role, signUpData.name);
-
       toast({
         title: "Account Created! 🎉",
         description: `Welcome to Jeevan Aahar, ${signUpData.name}! Please complete your profile.`,
       });
-
-      // Wait for AuthContext to load the new user profile
-      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Redirect to profile completion page
       navigate("/complete-profile");

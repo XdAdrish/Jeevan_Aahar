@@ -37,8 +37,6 @@ export interface ApiResponse<T> {
 
 /**
  * Get current user profile
- * 
- * Backend auto-creates profile on first authentication
  */
 export async function getUserProfile(): Promise<UserProfile | null> {
     try {

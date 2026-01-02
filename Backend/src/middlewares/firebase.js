@@ -2,13 +2,54 @@ import admin from "../config/firebaseAdmin.js";
 import Profile from "../models/user.models.js";
 
 /**
- * Firebase Authentication + Auto-Create Profile Middleware
+ * Lightweight Firebase Authentication (for signup)
+ * 
+ * Only verifies Firebase token and attaches firebaseUser
+ * Does NOT load MongoDB profile (used for signup endpoint)
+ */
+export const authenticateFirebaseOnly = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "No authentication token provided"
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decodedToken = await admin.auth().verifyIdToken(token);
+
+    req.firebaseUser = decodedToken;
+    next();
+  } catch (error) {
+    console.error("❌ Firebase authentication failed:", error.message);
+
+    if (error.code === "auth/id-token-expired") {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication token expired. Please sign in again.",
+      });
+    }
+
+    res.status(401).json({
+      success: false,
+      message: "Authentication failed",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Firebase Authentication + Load Profile Middleware
  * 
  * This middleware:
  * 1. Verifies Firebase ID token
- * 2. Extracts uid, name, email from Firebase
- * 3. Finds or creates Profile in MongoDB
- * 4. Attaches profile to req.profile
+ * 2. Loads existing MongoDB profile
+ * 3. Attaches profile to req.profile (or null if not found)
+ * 
+ * Used for post-signup routes only
  */
 export const authenticateAndLoadProfile = async (req, res, next) => {
   try {
@@ -26,26 +67,13 @@ export const authenticateAndLoadProfile = async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
 
     // 2. Extract Firebase user data
-    const { uid, email } = decodedToken;
+    const { uid, email, name } = decodedToken;
 
-    // 3. Find or create profile (idempotent)
-    let profile = await Profile.findOne({ uid });
+    // 3. Load existing profile (do NOT auto-create)
+    const profile = await Profile.findOne({ uid });
 
-    // 4. Auto-create profile on first authentication
-    if (!profile) {
-      profile = await Profile.create({
-        uid,
-        email: email || decodedToken.email,
-        name: decodedToken.name || email?.split("@")[0] || "User",
-        role: "donor", // Default role
-        isCompleted: false,
-      });
-
-      console.log(`✅ Auto-created MongoDB profile for: ${email} (${uid})`);
-    }
-
-    // 5. Attach profile to request
-    req.profile = profile;
+    // 4. Attach to request
+    req.profile = profile; // Will be null if user hasn't completed signup
     req.firebaseUser = decodedToken;
 
     next();

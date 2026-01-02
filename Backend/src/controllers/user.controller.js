@@ -5,11 +5,17 @@ import { asyncHandler } from "../utils/asyncHadler.js";
 /**
  * GET /api/v1/profile
  * 
- * Returns profile preview with auto-filled fields
- * Shows isCompleted status
+ * Returns current user's profile
  */
 export const getProfile = asyncHandler(async (req, res) => {
-    // Profile is guaranteed to exist and is loaded by authenticateAndLoadProfile middleware
+    // Check if profile exists
+    if (!req.profile) {
+        return res.status(404).json({
+            success: false,
+            message: "Profile not found. Please complete signup.",
+        });
+    }
+
     return res.status(200).json(
         new ApiResponse(200, req.profile, "Profile retrieved successfully")
     );

@@ -1,22 +1,24 @@
 import { Router } from "express";
 import { getProfile, updateProfile, getUserByUid } from "../controllers/user.controller.js";
-import { authenticateAndLoadProfile } from "../middlewares/firebase.js";
+import { signup } from "../controllers/auth.controller.js";
+import { authenticateFirebaseOnly, authenticateAndLoadProfile } from "../middlewares/firebase.js";
 
 const router = Router();
 
 /**
- * Single unified profile route
- * 
- * GET /profile - Get profile preview (auto-filled + isCompleted)
- * PATCH /profile - Update profile completion fields
- * GET /profile/:uid - Get public profile by UID
- * 
- * Both routes use authenticateAndLoadProfile middleware which:
- * - Verifies Firebase token
- * - Auto-creates profile on first login
- * - Loads profile into req.profile
+ * Auth Routes
  */
+// POST /auth/signup - Create MongoDB profile after Firebase signup
+// Uses lightweight auth (no profile loading)
+router.post("/auth/signup", authenticateFirebaseOnly, signup);
 
+/**
+ * Profile Routes
+ * 
+ * GET /profile - Get current user's profile
+ * PATCH /profile - Update profile (complete profile)
+ * GET /profile/:uid - Get public profile by UID
+ */
 router.get("/profile", authenticateAndLoadProfile, getProfile);
 router.patch("/profile", authenticateAndLoadProfile, updateProfile);
 router.get("/profile/:uid", getUserByUid); // Public endpoint, no auth required

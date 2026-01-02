@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/config/firebase"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { getUserProfile } from "@/services/userService";
+import { completeSignup } from "@/services/authService";
 
 export default function AuthPage() {
   const { toast } = useToast();
@@ -85,17 +86,20 @@ export default function AuthPage() {
     setIsLoading(true);
 
     try {
-      // Create user with Firebase Authentication
+      // 1. Create Firebase account
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         signUpData.email,
         signUpData.password
       );
 
-      // Update user profile with name
+      // 2. Update Firebase displayName
       await updateProfile(userCredential.user, {
         displayName: signUpData.name,
       });
+
+      // 3. Create MongoDB profile with user-selected role
+      await completeSignup(signUpData.name, signUpData.role);
 
       toast({
         title: "Account Created! 🎉",

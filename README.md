@@ -6,15 +6,20 @@
   />
   <h1>JEEVAN AAHAR</h1>
 
-
 <p align="left">
 	<em>A Meal. A Smile. A Life. - Connecting surplus food with those in need</em>
 </p>
+
 <p align="left">
 	<img src="https://img.shields.io/github/last-commit/XdAdrish/Jeevan_Aahar?style=default&logo=git&logoColor=white&color=0080ff" alt="last-commit">
 	<img src="https://img.shields.io/github/languages/top/XdAdrish/Jeevan_Aahar?style=default&color=0080ff" alt="repo-top-language">
 	<img src="https://img.shields.io/github/languages/count/XdAdrish/Jeevan_Aahar?style=default&color=0080ff" alt="repo-language-count">
 </p>
+<p>
+    🌐 <a href="https://jeevan-aahar.vercel.app/" target="_blank">
+      Live Project Website
+    </a>
+  </p>
 </div>
 <br clear="right">
 

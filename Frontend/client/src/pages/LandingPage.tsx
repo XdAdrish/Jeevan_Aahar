@@ -110,25 +110,7 @@ export default function LandingPage() {
               Together, we can fight hunger and reduce food waste in our communities.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-              <Button size="lg" className="gradient-hero border-0 text-lg h-14 px-8 hover-glow transition-all hover:scale-105" asChild>
-                <Link to="/donate">
-                  <Heart className="mr-2 h-5 w-5 animate-pulse-soft" />
-                  Donate Food
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="glass-effect text-primary-foreground hover:bg-primary-foreground/20 h-14 px-8 text-lg transition-all hover:scale-105"
-                asChild
-              >
-                <Link to="/requests">
-                  Request Food
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
+  
 
             {/* Quick Stats */}
             <div className="flex gap-8 pt-6">

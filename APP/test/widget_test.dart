@@ -22,7 +22,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     // Initialize the WebView controller
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse('https://flutter.dev'));
+      ..loadRequest(Uri.parse('https://jeevan-aahar.vercel.app'));
   }
 
   @override
@@ -39,7 +39,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
           automaticallyImplyLeading: false,
           title: const Center(
             child: Text(
-              'Civic Connect',
+              'Jeevan Aahaar',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,

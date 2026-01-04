@@ -35,8 +35,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
-        android:label="civic_connect"
-        android:name="${applicationName}"
+        android:label="Jeevan Aahar"
         android:icon="@mipmap/ic_launcher">
         
         <activity
@@ -59,6 +58,12 @@
               />
               
             <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="https" android:host="jeevanaahar.com" />
+                <data android:scheme="http" android:host="jeevanaahar.com" />
+
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>

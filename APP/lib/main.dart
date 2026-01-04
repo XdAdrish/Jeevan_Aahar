@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'web_view_stub.dart' if (dart.library.html) 'web_view_web.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Civic Connect',
+      title: 'Jeevan Aahar',
       theme: ThemeData(
         primarySwatch: Colors.teal,
       ),
@@ -24,23 +26,28 @@ class MyApp extends StatelessWidget {
 class HomePageWidget extends StatefulWidget {
   const HomePageWidget({super.key});
 
-  static String routeName = 'HomePage';
-  static String routePath = '/homePage';
-
   @override
   State<HomePageWidget> createState() => _HomePageWidgetState();
 }
 
 class _HomePageWidgetState extends State<HomePageWidget> {
-  late final WebViewController _webViewController;
+  late final WebViewController? _webViewController;
+  final String _url = 'https://jeevan-aahar.vercel.app';
+  final String _viewType = 'jeevan-aahar-iframe';
 
   @override
   void initState() {
     super.initState();
 
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse('https://flutter.dev'));
+    if (!kIsWeb) {
+      // For mobile platforms, use WebView
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..clearCache()
+        ..loadRequest(Uri.parse(_url));
+    } else {
+      _webViewController = null;
+    }
   }
 
   @override
@@ -57,7 +64,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
           automaticallyImplyLeading: false,
           title: const Center(
             child: Text(
-              'Civic Connect',
+              'Jeevan Aahar',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
@@ -69,15 +76,11 @@ class _HomePageWidgetState extends State<HomePageWidget> {
           elevation: 2,
         ),
         body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: WebViewWidget(
-                  controller: _webViewController,
+          child: kIsWeb
+              ? buildWebView(_url, _viewType)
+              : WebViewWidget(
+                  controller: _webViewController!,
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );

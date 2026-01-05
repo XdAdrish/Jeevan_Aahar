@@ -6,11 +6,11 @@
   />
   <h1>JEEVAN AAHAR</h1>
 
-<p align="left">
+<p align="center">
 	<em>A Meal. A Smile. A Life. - Connecting surplus food with those in need</em>
 </p>
 
-<p align="left">
+<p align="center">
 	<img src="https://img.shields.io/github/last-commit/XdAdrish/Jeevan_Aahar?style=default&logo=git&logoColor=white&color=0080ff" alt="last-commit">
 	<img src="https://img.shields.io/github/languages/top/XdAdrish/Jeevan_Aahar?style=default&color=0080ff" alt="repo-top-language">
 	<img src="https://img.shields.io/github/languages/count/XdAdrish/Jeevan_Aahar?style=default&color=0080ff" alt="repo-language-count">
@@ -525,6 +525,39 @@ Currently, the project uses manual testing. Automated test suites are planned fo
 - [X] **Responsive UI**: Mobile-first design with modern components
 - [X] **Dashboard Analytics**: Impact statistics and donation history
 
+### 🔍 Future Features - Advanced & Safety
+
+#### 🗺️ Real-Time Mapping
+Live map view to track active donation locations and real-time availability of surplus food, helping recipients find the nearest and fastest options.
+
+#### 💬 In-App Chat System
+Secure real-time chat between donors and receivers for smooth coordination of pickup time, quantity confirmation, and special instructions.
+
+#### 🛠️ Admin Management Dashboard
+A centralized admin panel to:
+- View all donations and users
+- Monitor platform activity
+- Approve, reject, or intervene in suspicious cases
+- Ensure smooth platform operations
+
+#### 🚩 Review & Flagging System
+Community-driven safety mechanism where users can:
+- Report spoiled, rotten, or suspicious food
+- Flag misuse or repeated unsafe donations
+- Help maintain trust and accountability
+
+Admins can review reports and take immediate corrective actions.
+
+#### 🧪 Food Spoilage Detection (AI-Assisted)
+AI-based food safety checks using image analysis and metadata to detect potential spoilage or contamination before distribution.
+
+#### 🤖 AI Chat Assistant
+Built-in AI assistant to guide users through:
+- Role selection (Donor / Recipient)
+- Donation submission process
+- Platform usage queries
+- Best practices for food safety and quality
+
 ---
 
 ## 🔰 Contributing
@@ -566,11 +599,21 @@ We welcome contributions from the community! Here's how you can help:
 
 </details>
 
-
-
 ---
 
+## 🎗 License
 
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+You are free to:
+- ✅ Use this project for personal or commercial purposes
+- ✅ Modify and distribute the code
+- ✅ Use it in private projects
+
+With the condition that:
+- ⚠️ The original license and copyright notice must be included
+
+---
 
 ## 🙌 Acknowledgments
 

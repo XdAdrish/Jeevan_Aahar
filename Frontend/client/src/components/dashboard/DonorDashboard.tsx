@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { getDonations, DonationResponse } from "@/services/donationService";
+import { getDonations, DonationResponse, DisposalPartner } from "@/services/donationService";
 import { format } from "date-fns";
 import { useState } from "react";
 import { PopulatedReceiver } from "@/services/donationService";
@@ -35,7 +35,7 @@ export function DonorDashboard() {
   const { userProfile } = useAuth();
   const [selectedReceiver, setSelectedReceiver] = useState<PopulatedReceiver | null>(null);
   const [isReceiverDialogOpen, setIsReceiverDialogOpen] = useState(false);
-  const [selectedDisposalPartner, setSelectedDisposalPartner] = useState<any>(null);
+  const [selectedDisposalPartner, setSelectedDisposalPartner] = useState<DisposalPartner | null>(null);
   const [isDisposalDialogOpen, setIsDisposalDialogOpen] = useState(false);
 
   const handleViewReceiver = (receiver: PopulatedReceiver) => {
@@ -44,7 +44,7 @@ export function DonorDashboard() {
   };
 
   const handleViewDisposalPartner = (donation: DonationResponse) => {
-    setSelectedDisposalPartner(donation.assignedDisposalPartner);
+    setSelectedDisposalPartner(donation.assignedDisposalPartner ?? null);
     setIsDisposalDialogOpen(true);
   };
 
